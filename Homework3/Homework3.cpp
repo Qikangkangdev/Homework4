@@ -55,7 +55,7 @@ int toBind;
 float t[FRAME];
 int lock;
 float speed, ratio;
-float SpeedRatio = 0.5;
+float SpeedRatio = 0.5, SpeedRatio1 = 1;
 int bnum = 100;
 
 int main(int argc, char * argv[])
@@ -368,7 +368,7 @@ void myTimerFunc(int val) {
 		}
 	}
 	for (int i = 0; i < 3; i++) {
-		cvector[choose1][i] = cvector[choose1][i] * SpeedRatio;
+		cvector[choose1][i] = cvector1[choose1][i] * SpeedRatio * SpeedRatio1;
 	}
 	for (int i = 0; i < 100; i++) {
 		for (int j = 0; j < 3; j++) {
@@ -896,15 +896,9 @@ void KeyboardFunc() {
 		SpeedRatio = SpeedRatio < 0.0 ? 0.0 : SpeedRatio;
 	}
 	if (lock == 1) {
-		tempv.Set(0.0, 0.0, 0.0);
-		if (mode == 1) {
-				temp = Euler.ToMatrix();
-			}
-		else {
-				temp = EyeMat.GetInverse();
-			}
+		tempv.Set(cvector[choose1][0], cvector[choose1][1], cvector[choose1][2]);
+		temp = tempv.ToEuler().ToMatrix();
 		speed = pow(cvector1[choose1][2], 2) + pow(cvector1[choose1][1], 2) + pow(cvector1[choose1][0], 2);
-		float speed2 = 0.0;
 		if (key_up == 1) {
 			tempv.Set(temp[4], temp[5], temp[6]);
 		}
@@ -918,7 +912,7 @@ void KeyboardFunc() {
 			tempv.Set(-temp[0], -temp[1], -temp[2]);
 		}
 		for (int i = 0; i < 3; i++) {
-			cvector1[choose1][i] += tempv[i] * 0.1;
+			cvector1[choose1][i] += tempv[i] * 0.1f;
 		}
 		SpeedNormalize(cvector1[choose1]);
 	}
@@ -928,9 +922,7 @@ void KeyboardFunc() {
 			speed1 += pow(cvector[choose1][i], 2);
 		}
 		if (speed1 >= 0.1) {
-			cvector1[choose1][0] /= 1.05;
-			cvector1[choose1][1] /= 1.05;
-			cvector1[choose1][2] /= 1.05;
+			SpeedRatio1 -= 0.1;
 		}		
 	}
 	if (key_pup == 1) {
@@ -938,10 +930,8 @@ void KeyboardFunc() {
 		for (int i = 0; i < 3; i++) {
 			speed1 += pow(cvector[choose1][i], 2);
 		}
-		if (speed1 <= 2.0) {
-			cvector1[choose1][0] *= 1.05;
-			cvector1[choose1][1] *= 1.05;
-			cvector1[choose1][2] *= 1.05;
+		if (speed1 <= 4.0) {
+			SpeedRatio1 += 0.1;
 		}	
 	}
 }
