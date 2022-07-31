@@ -15,7 +15,18 @@
 #include <string>
 #define FRAME 25
 using namespace std;
+#pragma warning(disable : 4996)
 
+GLuint texSky;
+GLuint tex1;
+GLuint tex2;
+GLuint tex3;
+GLuint tex4;
+GLuint tex5;
+GLuint tex6;
+GLuint texSkin;
+#define BMP_Header_Length 54
+GLuint load_texture(const char* file_name);
 void reshape(int w, int h);
 void myDisplay(void);
 float setax = 0.0;
@@ -93,6 +104,14 @@ int main(int argc, char * argv[])
 	glutInitWindowPosition(400, 150);
 	glutInitWindowSize(1000, 800);
 	glutCreateWindow("作业四");
+	glEnable(GL_TEXTURE_2D);
+	texSkin = load_texture("skin.bmp");
+	tex1 = load_texture("1.bmp");
+	tex2 = load_texture("2.bmp");
+	tex3 = load_texture("3.bmp");
+	tex4 = load_texture("4.bmp");
+	tex5 = load_texture("5.bmp");
+	tex6 = load_texture("6.bmp");
 	init();
 	glutTimerFunc(20, myTimerFunc, 0);
 	glutReshapeFunc(&reshape);
@@ -144,6 +163,61 @@ void RenderWorld() {
 	CVector217 rotateV;
 	CMatrix217 transM;
 	CVector217 transV;
+
+	// 设置光源颜色 , 黑色 
+	float blackColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	float whiteColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+	// 设置环境光 
+	glLightfv(GL_LIGHT0, GL_AMBIENT, blackColor);
+
+	// 设置漫反射光
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, whiteColor);
+
+	// 设置镜面反射光 
+	glLightfv(GL_LIGHT0, GL_SPECULAR, whiteColor);
+
+	// 设置光源位置 , 最后一位设置成 0 代表该光源无限远
+	float lightPosition[] = { 50.0f, 50.0f, 0.0f, 1.0f };
+
+	// 设置光源位置 
+	glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+
+	//GL_LIGHT1
+	glLightfv(GL_LIGHT1, GL_AMBIENT, blackColor);
+
+	// 设置漫反射光
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, whiteColor);
+
+	// 设置镜面反射光 
+	glLightfv(GL_LIGHT1, GL_SPECULAR, whiteColor);
+
+	// 设置光源位置 , 最后一位设置成 0 代表该光源无限远
+	float lightPosition1[] = { 0.0f, 50.0f, 50.0f, 1.0f };
+
+	// 设置光源位置 
+	glLightfv(GL_LIGHT1, GL_POSITION, lightPosition);
+
+	// 设置材质
+	float blackMat[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	float whiteMat[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	float Mat1[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+
+	// 设置环境光反射材质
+	glMaterialfv(GL_FRONT, GL_AMBIENT, Mat1);
+
+	// 设置漫反射光反射材质 
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, Mat1);
+
+	// 设置镜面反射光反射材质 
+	glMaterialfv(GL_FRONT, GL_SPECULAR, blackMat);
+
+	// 启用光照
+	glEnable(GL_LIGHTING);
+
+	// 设置光源 , 0 号光源使用的是默认材质
+	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
 
 	// 画坐标轴
 	glPushMatrix();
@@ -219,59 +293,69 @@ void RenderWorld() {
 	glMultMatrixf(transM);
 	glPolygonMode(GL_FRONT, GL_LINE);
 	glPolygonMode(GL_BACK, GL_FILL);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, tex2);
 
 	// 绘制顶面
-	glColor3f(1.0f, 1.0f, 0.0f);
 	glBegin(GL_QUADS);
-	glVertex3f(0.0f, 100.0f, 0.0f);
-	glVertex3f(0.0f, 100.0f, 100.0f);
-	glVertex3f(100.0f, 100.0f, 100.0f);
-	glVertex3f(100.0f, 100.0f, 0.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.0f, 100.0f, 0.0f);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 100.0f, 100.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(100.0f, 100.0f, 100.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(100.0f, 100.0f, 0.0f);
 	glEnd();
 
 	// 绘制底面
+	glBindTexture(GL_TEXTURE_2D, tex1);
 	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 0.0f);
 	glVertex3f(0.0f, 0.0f, 100.0f);
+	glTexCoord2f(1.0f, 0.0f);
 	glVertex3f(0.0f, 0.0f, 0.0f);
+	glTexCoord2f(1.0f, 1.0f);
 	glVertex3f(100.0f, 0.0f, 0.0f);
+	glTexCoord2f(0.0f, 1.0f);
 	glVertex3f(100.0f, 0.0f, 100.0f);
+	glEnd();
 
 	// 绘制左面
-	glColor3f(0.0f, 1.0f, 1.0f);
+	glBindTexture(GL_TEXTURE_2D, tex5);
 	glBegin(GL_QUADS);
-	glVertex3f(0.0f, 100.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 100.0f);
-	glVertex3f(0.0f, 100.0f, 100.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.0f, 100.0f, 0.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.0f, 0.0f, 0.0f);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, 100.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f, 100.0f, 100.0f);
 	glEnd();
 
 	// 绘制右面
+	glBindTexture(GL_TEXTURE_2D, tex4);
 	glBegin(GL_QUADS);
-	glVertex3f(100.0f, 100.0f, 100.0f);
-	glVertex3f(100.0f, 0.0f, 100.0f);
-	glVertex3f(100.0f, 0.0f, 0.0f);
-	glVertex3f(100.0f, 100.0f, 0.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(100.0f, 100.0f, 100.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(100.0f, 0.0f, 100.0f);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(100.0f, 0.0f, 0.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(100.0f, 100.0f, 0.0f);
 	glEnd();
 
 	// 绘制前面
-	glColor3f(1.0f, 0.0f, 1.0f);
+	glBindTexture(GL_TEXTURE_2D, tex3);
 	glBegin(GL_QUADS);
-	glVertex3f(0.0f, 100.0f, 100.0f);
-	glVertex3f(0.0f, 0.0f, 100.0f);
-	glVertex3f(100.0f, 0.0f, 100.0f);
-	glVertex3f(100.0f, 100.0f, 100.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.0f, 100.0f, 100.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.0f, 0.0f, 100.0f);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(100.0f, 0.0f, 100.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(100.0f, 100.0f, 100.0f);
 	glEnd();
 
 	// 绘制后面
+	glBindTexture(GL_TEXTURE_2D, tex6);
 	glBegin(GL_QUADS);
-	glVertex3f(100.0f, 100.0f, 0.0f);
-	glVertex3f(100.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, 100.0f, 0.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(100.0f, 100.0f, 0.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(100.0f, 0.0f, 0.0f);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, 0.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f, 100.0f, 0.0f);
 	glEnd();
 
 	glPopMatrix();
 	// 立方体绘制完毕
+	glDisable(GL_TEXTURE_2D);
 
 	// 绘制气泡
 	glPolygonMode(GL_FRONT, GL_FILL);
@@ -284,14 +368,16 @@ void RenderWorld() {
 		rotatev.Set(cvector[i][0], cvector[i][1], cvector[i][2]);
 		tempe = rotatev.ToEuler();
 		glMultMatrixf(tempe.ToMatrix());
-		glColor4f(ccolor[i][0], ccolor[i][1], ccolor[i][2], 0.0f);
+		GLUquadricObj *quadObj = gluNewQuadric();//创建一个二次曲面物体
+		gluQuadricTexture(quadObj, GL_TRUE);
+		glBindTexture(GL_TEXTURE_2D, texSkin);
 		glutSolidSphere(csize[i], 100, 100);
+		gluDeleteQuadric(quadObj);
 		glPopMatrix();
 	}
 	// 球体绘制完毕
 
 	// 绘制字体
-	glColor3f(0.5f, 0.5f, 0.0f);
 	stringstream ss1, ss2;
 	if (lock != 1) {
 		ss1 << "Current bubble's size: " << "Unlock";
@@ -1089,4 +1175,83 @@ void SpeedNormalize(float *a) {
 			a[i] /= len;
 		}
 	}
+}
+
+// 绑定纹理函数
+GLuint load_texture(const char* file_name)
+{
+	GLint width, height, total_bytes;
+	GLubyte* pixels = 0;
+	GLuint last_texture_ID = 0, texture_ID = 0;
+
+	// 打开文件，如果失败，返回
+	FILE* pFile = fopen(file_name, "rb");
+	if (pFile == 0)
+	{
+		printf("Wrong!!!!\n");
+		return 0;
+	}
+
+	// 读取文件中图象的宽度和高度
+	fseek(pFile, 0x0012, SEEK_SET);
+	fread(&width, 4, 1, pFile);
+	fread(&height, 4, 1, pFile);
+	fseek(pFile, BMP_Header_Length, SEEK_SET);
+
+	// 计算每行像素所占字节数，并根据此数据计算总像素字节数
+	GLint line_bytes = width * 3;
+	while (line_bytes % 4 != 0)
+		++line_bytes;
+	total_bytes = line_bytes * height;
+
+	// 根据总像素字节数分配内存
+	pixels = (GLubyte*)malloc(total_bytes);
+	if (pixels == 0)
+	{
+		fclose(pFile);
+		return 0;
+	}
+
+	// 读取像素数据
+	if (fread(pixels, total_bytes, 1, pFile) <= 0)
+	{
+		free(pixels);
+		fclose(pFile);
+		return 0;
+	}
+
+
+	// 分配一个新的纹理编号
+	glGenTextures(1, &texture_ID);
+	if (texture_ID == 0)
+	{
+		free(pixels);
+		fclose(pFile);
+		return 0;
+	}
+
+	// 绑定新的纹理，载入纹理并设置纹理参数
+	// 在绑定前，先获得原来绑定的纹理编号，以便在最后进行恢复
+	GLint lastTextureID = last_texture_ID;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &lastTextureID);
+
+	glBindTexture(GL_TEXTURE_2D, texture_ID);   //绑定纹理
+
+												//设置4个常用的纹理参数。。如何把纹理像素映射成像素
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE); //指定纹理贴图与材质的混合模式
+
+																//参数： 目标纹理，多重细节层次（不考虑多重纹理为0），RGB数据存储格式，二维纹理像素宽高，纹理边框大小
+																//       纹理像素数据的格式，数据保存形式（像素数据类型，字节），内存中指向纹理图像的指针（纹理图像的内参快地址）
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,
+		GL_BGR_EXT, GL_UNSIGNED_BYTE, pixels); //为纹理对象指定一个纹理
+
+	glBindTexture(GL_TEXTURE_2D, lastTextureID);  //恢复之前的纹理绑定
+
+	free(pixels);
+	return texture_ID;
 }
