@@ -12,7 +12,7 @@
 #include <iostream>
 #include <sstream>
 #include <ctime>
-#include "string.h"
+#include <string>
 #define FRAME 25
 using namespace std;
 
@@ -34,7 +34,7 @@ void SetView();
 void init();
 void RenderWorld();
 void KeyboardFunc();
-void Font2D(char * str, double x, double y);
+void Font2D(const char * str, double x, double y);
 void exit1();
 void SpeedNormalize(float *a);
 CVector217 GenerateRay(float x, float y);
@@ -291,17 +291,21 @@ void RenderWorld() {
 	// 球体绘制完毕
 
 	// 绘制字体
-	/*glColor3f(0.5f, 0.5f, 0.0f);
+	glColor3f(0.5f, 0.5f, 0.0f);
 	stringstream ss1, ss2;
-	ss1 << "Current bubble's size: " << csize[bind];
-	ss2 << "Current remaining bubbles' number: " << 100;
+	if (lock != 1) {
+		ss1 << "Current bubble's size: " << "Unlock";
+	}
+	else {
+		ss1 << "Current bubble's size: " << csize[choose1];
+	}
+	ss2 << "Current remaining bubbles' number: " << bnum;
 	string str1 = ss1.str();
 	string str2 = ss2.str();
-	char s1[50], s2[50];
-	str1.copy(s1, str1.length() - 1, 0);
-	str2.copy(s2, str2.length() - 1, 0);
+	const char * s1 = str1.data();
+	const char * s2 = str2.data();
 	Font2D(s1, -0.9, 0.9);
-	Font2D(s2, -0.9, 0.8);*/
+	Font2D(s2, -0.9, 0.8);
 }
 
 // 设置矩阵
@@ -360,6 +364,7 @@ void myDisplay(void) {
 
 // 计时器函数
 void myTimerFunc(int val) {
+	exit1();
 	if (fabs(cvector[0][0] - cvector1[0][0] * SpeedRatio) >= 1e-5 || cvector[0][0] == 0.0) {
 		for (int i = 0; i < 100; i++) {
 			for (int j = 0; j < 100; j++) {
@@ -1049,7 +1054,7 @@ void exit1() {
 }
 
 // 显示字体
-void Font2D(char * str, double x, double y) {
+void Font2D(const char * str, double x, double y) {
 	// 设置投影方式：平行投影
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
