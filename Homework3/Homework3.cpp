@@ -66,7 +66,7 @@ int toBind;
 float t[FRAME];
 int lock;
 float speed, ratio;
-float SpeedRatio = 0.5, SpeedRatio1 = 1;
+float SpeedRatio = 0.2, SpeedRatio1 = 1;
 int bnum = 100;
 
 int main(int argc, char * argv[])
@@ -473,6 +473,52 @@ void myTimerFunc(int val) {
 				clocation[i][j] = -50.0 + csize[i];
 				cvector1[i][j] *= -1.0;
 				cvector[i][j] *= -1.0;
+			}
+		}
+	}
+	for (int i = 0; i < 99; i++) {
+		if (csize[i] == 0.0) continue;
+		for (int k = i + 1; k < 100; k++) {
+			if (csize[k] == 0.0) continue;
+			CVector217 dis;
+			dis.Set(clocation[i][0] - clocation[k][0], clocation[i][1] - clocation[k][1], clocation[i][2] - clocation[k][2]);
+			float distance = dis.len();
+			if (csize[i] + csize[k] >= distance) {
+				if (i == choose1) {
+					if (csize[i] > csize[k]) continue;
+				}
+				if (k == choose1) {
+					if (csize[k] > csize[i]) continue;
+				}
+				float angle, angle2, angle3;
+				float dx = fabs(clocation[i][0] - clocation[k][0]);
+				float dy = fabs(clocation[i][1] - clocation[k][1]);
+				float dz = fabs(clocation[i][2] - clocation[k][2]);
+				float length = sqrt(dx * dx + dz * dz);
+				angle = acos(dx / length);
+				angle2 = acos(dz / length);
+				angle3 = atan2(dy, length);
+				length = cos(angle3) * (csize[i] + csize[k] - distance);
+				float ax = cos(angle) * length;
+				float az = cos(angle2) * length;
+				float ay = sin(angle3) * (csize[i] + csize[k] - distance);
+				float ratio = pow(csize[k] / csize[i], 3);
+				float ratio1 = 1.0 - ratio;
+				clocation[i][0] -= ax * ratio;
+				clocation[i][1] -= ay * ratio;
+				clocation[i][2] -= az * ratio;
+				clocation[k][0] += ax * ratio1;
+				clocation[k][1] += ay * ratio1;
+				clocation[k][2] += az * ratio1;
+				cvector1[i][0] -= ax * ratio;
+				cvector1[i][1] -= ay * ratio;
+				cvector1[i][2] -= az * ratio;
+				SpeedNormalize(cvector1[i]);
+				cvector1[k][0] += ax * ratio;
+				cvector1[k][1] += ay * ratio;
+				cvector1[k][2] += az * ratio;
+				SpeedNormalize(cvector1[k]);
+
 			}
 		}
 	}
@@ -1126,7 +1172,7 @@ void exit1() {
 		for (int i = 0; i < 100; i++) {
 			if (i != choose1 && csize[i] <= csize[choose1] && csize[i] != 0) {
 				size1 = pow((clocation[choose1][0] - clocation[i][0]), 2) + pow((clocation[choose1][1] - clocation[i][1]), 2) + pow((clocation[choose1][2] - clocation[i][2]), 2);
-				if (pow((csize[choose1] + csize[i]), 2)>size1) {
+				if (pow((csize[choose1] + csize[i]), 2) > size1) {
 					csize[choose1] = pow((pow(csize[i], 3) + pow(csize[choose1], 3)), (1.0 / 3.0));
 					csize[i] = 0;
 					bnum -= 1;
