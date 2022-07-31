@@ -11,8 +11,8 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <string>
 #include <ctime>
+#include "string.h"
 #define FRAME 25
 using namespace std;
 
@@ -23,18 +23,24 @@ float setay = 0.0;
 void myTimerFunc(int val);
 float clocation[100][3];
 float ccolor[100][3];
-float cvector[100][3];
+float cvector[100][3], cvector1[100][3];
 float csize[100];
 void myKeyboardUpFunc(unsigned char key, int x, int y);
 void myKeyboardFunc(unsigned char key, int x, int y);
 void myMouseFunc(int button, int state, int x, int y);
+void mySpecialFunc(GLint key, GLint x, GLint y);
+void mySpecialUpFunc(GLint key, GLint x, GLint y);
 void SetView();
 void init();
 void RenderWorld();
 void KeyboardFunc();
+void Font2D(char * str, double x, double y);
+void exit1();
+void SpeedNormalize(float *a);
 CVector217 GenerateRay(float x, float y);
-int key_a, key_d, key_w, key_s, key_q, key_e, key_j, key_l, key_i, key_esc;
+int key_a, key_d, key_w, key_s, key_q, key_e, key_j, key_l, key_i, key_esc, key_greater, key_less;
 int key_k, key_u, key_o, key_lmp, key_rmp, key_lbp, key_rbp, mode = 1, key_1, key_2;
+int key_up, key_down, key_left, key_right, key_pup, key_pdown;
 CEuler217 Euler, tempe, GodViewModeE, tempe1;
 float mspeed = 1, rspeed = 1;
 float g_IEyeMat[16] = { 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 };
@@ -44,9 +50,13 @@ CMatrix217 EyeMat, IEyeMat(g_IEyeMat), temp, EulerTempM, GodViewModeM, GodViewMo
 CQuaternion217 tempq, tempq1;
 float OGLMANAGER_WIDTH, OGLMANAGER_HEIGHT;
 CVector217 ray, temp_trans, GodViewModeT;
-int choose = -1, bind = -1, frame;
+int choose = -1, bind = -1, choose1 = -1, frame;
 int toBind;
 float t[FRAME];
+int lock;
+float speed, ratio;
+float SpeedRatio = 0.5;
+int bnum = 100;
 
 int main(int argc, char * argv[])
 {
@@ -60,7 +70,7 @@ int main(int argc, char * argv[])
 	uniform_real_distribution<float> location(-47, 47);
 	uniform_real_distribution<float> size(2, 3);
 	uniform_real_distribution<float> color(0, 1);
-	uniform_real_distribution<float> vector(0.2, 0.4);
+	uniform_real_distribution<float> vector(0.0, 1.0);
 	e.seed(time(0));
 	f.seed(time(0) + 1);
 	for (int i = 0; i < 100; i++) {
@@ -70,6 +80,12 @@ int main(int argc, char * argv[])
 			cvector[i][j] = vector(e);
 		}
 		csize[i] = size(f);
+	}
+	for (int i = 0; i < 100; i++) {
+		SpeedNormalize(cvector[i]);
+		for (int j = 0; j < 3; j++) {
+			cvector1[i][j] = cvector[i][j];
+		}
 	}
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE );
@@ -83,6 +99,8 @@ int main(int argc, char * argv[])
 	glutKeyboardUpFunc(&myKeyboardUpFunc);
 	glutKeyboardFunc(&myKeyboardFunc);
 	glutMouseFunc(&myMouseFunc);
+	glutSpecialUpFunc(&mySpecialUpFunc);
+	glutSpecialFunc(&mySpecialFunc);
 	glutDisplayFunc(&myDisplay);
 	glutMainLoop();
 	system("pause");
@@ -91,6 +109,7 @@ int main(int argc, char * argv[])
 
 // 初始化
 void init() {
+
 	translatev.Set(120, 40, 200);
 	rotatev.Set(0, 1, 0);
 	glLoadIdentity();
@@ -270,6 +289,19 @@ void RenderWorld() {
 		glPopMatrix();
 	}
 	// 球体绘制完毕
+
+	// 绘制字体
+	/*glColor3f(0.5f, 0.5f, 0.0f);
+	stringstream ss1, ss2;
+	ss1 << "Current bubble's size: " << csize[bind];
+	ss2 << "Current remaining bubbles' number: " << 100;
+	string str1 = ss1.str();
+	string str2 = ss2.str();
+	char s1[50], s2[50];
+	str1.copy(s1, str1.length() - 1, 0);
+	str2.copy(s2, str2.length() - 1, 0);
+	Font2D(s1, -0.9, 0.9);
+	Font2D(s2, -0.9, 0.8);*/
 }
 
 // 设置矩阵
@@ -328,15 +360,27 @@ void myDisplay(void) {
 
 // 计时器函数
 void myTimerFunc(int val) {
+	if (fabs(cvector[0][0] - cvector1[0][0] * SpeedRatio) >= 1e-5 || cvector[0][0] == 0.0) {
+		for (int i = 0; i < 100; i++) {
+			for (int j = 0; j < 100; j++) {
+				cvector[i][j] = cvector1[i][j] * SpeedRatio;
+			}
+		}
+	}
+	for (int i = 0; i < 3; i++) {
+		cvector[choose1][i] = cvector[choose1][i] * SpeedRatio;
+	}
 	for (int i = 0; i < 100; i++) {
 		for (int j = 0; j < 3; j++) {
 			clocation[i][j] += cvector[i][j];
-			if (clocation[i][j] + csize[i] > 50) {
+			if (clocation[i][j] + csize[i] > 50.0) {
 				clocation[i][j] = 50.0 - csize[i];
+				cvector1[i][j] *= -1.0;
 				cvector[i][j] *= -1.0;
 			}
-			else if (clocation[i][j] - csize[i] < -50) {
+			else if (clocation[i][j] - csize[i] < -50.0) {
 				clocation[i][j] = -50.0 + csize[i];
+				cvector1[i][j] *= -1.0;
 				cvector[i][j] *= -1.0;
 			}
 		}
@@ -412,6 +456,39 @@ void myKeyboardUpFunc(unsigned char key, int x, int y) {\
 	case 27:
 		key_esc = 0;
 		break;
+	case '>':
+		key_greater = 0;
+		break;
+	case '<':
+		key_less = 0;
+		break;
+	}
+}
+
+void mySpecialUpFunc(GLint key, GLint x, GLint y) {
+	cout << key << " Up" << endl;
+	if (key == GLUT_KEY_UP)
+	{
+		key_up = 0;
+	}
+	if (key == GLUT_KEY_DOWN) {
+		key_down = 0;
+	}
+	if (key == GLUT_KEY_LEFT)
+	{
+		key_left = 0;
+	}
+	if (key == GLUT_KEY_RIGHT)
+	{
+		key_right = 0;
+	}
+	if (key == GLUT_KEY_PAGE_UP)
+	{
+		key_pup = 0;
+	}
+	if (key == GLUT_KEY_PAGE_DOWN)
+	{
+		key_pdown = 0;
 	}
 }
 
@@ -492,6 +569,40 @@ void myKeyboardFunc(unsigned char key, int x, int y) {
 	case 27:
 		key_esc = 1;
 		break;
+	case '>':
+		key_greater = 1;
+		break;
+	case '<':
+		key_less = 1;
+		break;
+	}
+}
+
+void mySpecialFunc(GLint key, GLint x, GLint y) {
+	cout << key << " Down" << endl;
+	if (key == GLUT_KEY_UP)
+	{
+		key_up = 1;
+	}
+	if (key == GLUT_KEY_DOWN)
+	{
+		key_down = 1;
+	}
+	if (key == GLUT_KEY_LEFT)
+	{
+		key_left = 1;
+	}
+	if (key == GLUT_KEY_RIGHT)
+	{
+		key_right = 1;
+	}
+	if (key == GLUT_KEY_PAGE_UP)
+	{
+		key_pup = 1;
+	}
+	if (key == GLUT_KEY_PAGE_DOWN)
+	{
+		key_pdown = 1;
 	}
 }
 
@@ -776,6 +887,63 @@ void KeyboardFunc() {
 	if (key_rbp == 1) {
 		rspeed += 0.2;
 	}
+	if (key_greater == 1) {
+		SpeedRatio += 0.05;
+		SpeedRatio = SpeedRatio > 1.0 ? 1.0 : SpeedRatio;
+	}
+	if (key_less == 1) {
+		SpeedRatio -= 0.05;
+		SpeedRatio = SpeedRatio < 0.0 ? 0.0 : SpeedRatio;
+	}
+	if (lock == 1) {
+		tempv.Set(0.0, 0.0, 0.0);
+		if (mode == 1) {
+				temp = Euler.ToMatrix();
+			}
+		else {
+				temp = EyeMat.GetInverse();
+			}
+		speed = pow(cvector1[choose1][2], 2) + pow(cvector1[choose1][1], 2) + pow(cvector1[choose1][0], 2);
+		float speed2 = 0.0;
+		if (key_up == 1) {
+			tempv.Set(temp[4], temp[5], temp[6]);
+		}
+		if (key_down == 1) {
+			tempv.Set(-temp[4], -temp[5], -temp[6]);
+		}
+		if (key_right == 1) {
+			tempv.Set(temp[0], temp[1], temp[2]);
+		}
+		if (key_left == 1) {
+			tempv.Set(-temp[0], -temp[1], -temp[2]);
+		}
+		for (int i = 0; i < 3; i++) {
+			cvector1[choose1][i] += tempv[i] * 0.1;
+		}
+		SpeedNormalize(cvector1[choose1]);
+	}
+	if (key_pdown == 1) {
+		float speed1 = 0.0;
+		for (int i = 0; i < 3; i++) {
+			speed1 += pow(cvector[choose1][i], 2);
+		}
+		if (speed1 >= 0.1) {
+			cvector1[choose1][0] /= 1.05;
+			cvector1[choose1][1] /= 1.05;
+			cvector1[choose1][2] /= 1.05;
+		}		
+	}
+	if (key_pup == 1) {
+		float speed1 = 0.0;
+		for (int i = 0; i < 3; i++) {
+			speed1 += pow(cvector[choose1][i], 2);
+		}
+		if (speed1 <= 2.0) {
+			cvector1[choose1][0] *= 1.05;
+			cvector1[choose1][1] *= 1.05;
+			cvector1[choose1][2] *= 1.05;
+		}	
+	}
 }
 
 // 响应鼠标回调函数
@@ -807,6 +975,8 @@ void myMouseFunc(int button, int state, int x, int y) {
 				else continue;
 			}
 			if (find) {
+				lock = 1;
+				choose1 = choose;
 				tempm1.Set(g_IEyeMat);
 				tempe1.Set(0, 0, 0);
 				if (bind == -1) {
@@ -866,4 +1036,62 @@ CVector217 GenerateRay(float x, float y) {
 	ray[1] = objy;
 	ray[2] = objz;
 	return ray;
+}
+
+//气泡吞噬退出函数
+void exit1() {
+	float size1;
+	if (lock == 1) {
+		for (int i = 0; i < 100; i++) {
+			if (i != choose1 && csize[i] <= csize[choose1] && csize[i] != 0) {
+				size1 = pow((clocation[choose1][0] - clocation[i][0]), 2) + pow((clocation[choose1][1] - clocation[i][1]), 2) + pow((clocation[choose1][2] - clocation[i][2]), 2);
+				if (pow((csize[choose1] + csize[i]), 2)>size1) {
+					csize[choose1] = pow((pow(csize[i], 3) + pow(csize[choose1], 3)), (1.0 / 3.0));
+					csize[i] = 0;
+					bnum -= 1;
+				}
+			}
+		}
+	}
+	if (bnum == 1) {
+		exit(0);
+	}
+}
+
+// 显示字体
+void Font2D(char * str, double x, double y) {
+	// 设置投影方式：平行投影
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	gluOrtho2D(-1.0f, 1.0f, -1.0f, 1.0f);
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	// 输出字符串
+	int len = strlen(str);
+	glRasterPos2f(x, y);
+	for (int i = 0; i < len; i++) {
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, str[i]);
+	}
+	// 恢复投影方式
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+}
+
+// 将速度归一化为1
+void SpeedNormalize(float *a) {
+	float len = 0.0;
+	for (int i = 0; i < 3; i++) {
+		len += pow(a[i], 2);
+	}
+	len = sqrt(len);
+	if (len != 0.0) {
+		for (int i = 0; i < 3; i++) {
+			a[i] /= len;
+		}
+	}
 }
